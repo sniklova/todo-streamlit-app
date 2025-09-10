@@ -1,36 +1,57 @@
 import streamlit as st
+import json
+from datetime import datetime
 
-st.set_page_config(page_title="To-Do List", page_icon="✅", layout="centered")
+# Soubor pro ukládání úkolů
+TODO_FILE = "todos.json"
 
+# Načtení úkolů ze souboru
+def load_todos():
+    try:
+        with open(TODO_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+# Uložení úkolů do souboru
+def save_todos(todos):
+    with open(TODO_FILE, "w", encoding="utf-8") as f:
+        json.dump(todos, f, ensure_ascii=False, indent=2)
+
+# Inicializace
+st.set_page_config(page_title="Můj To-Do List", page_icon="📝")
 st.title("📝 Můj To-Do List")
 st.write("Zde si můžeš zapisovat a spravovat své úkoly.")
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+# Načtení úkolů
+todos = load_todos()
 
-new_task = st.text_input("Přidat nový úkol", placeholder="Např. Udělat domácí úkol...")
+# Formulář pro přidání nového úkolu
+with st.form("new_task_form"):
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        new_task = st.text_input("Přidat nový úkol")
+    with col2:
+        emoji = st.text_input("Emoji", max_chars=2)
 
-if st.button("➕ Přidat"):
-    if new_task.strip():
-        st.session_state.tasks.append({"text": new_task, "done": False})
-        st.rerun()
+    col3, col4 = st.columns([1, 1])
+    with col3:
+        person = st.text_input("S kým?", placeholder="Jméno osoby")
+    with col4:
+        due_date = st.date_input("Do kdy?")
 
-if st.session_state.tasks:
-    st.subheader("📋 Seznam úkolů")
-
-    for i, task in enumerate(st.session_state.tasks):
-        col1, col2 = st.columns([0.1, 0.9])
-        done = col1.checkbox("", value=task["done"], key=f"task_{i}")
-        if done != task["done"]:
-            st.session_state.tasks[i]["done"] = done
-
-        if task["done"]:
-            col2.markdown(f"~~{task['text']}~~")
-        else:
-            col2.markdown(task["text"])
-
-    if st.button("🗑️ Odstranit hotové úkoly"):
-        st.session_state.tasks = [task for task in st.session_state.tasks if not task["done"]]
+    submitted = st.form_submit_button("➕ Přidat")
+    if submitted and new_task:
+        task = {
+            "task": new_task,
+            "emoji": emoji,
+            "person": person,
+            "due_date": due_date.strftime("%Y-%m-%d"),
+            "created": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        todos.append(task)
+        save_todos(todos)
         st.experimental_rerun()
-else:
-    st.info("Zatím nemáš žádné úkoly. Přidej si nějaký výše.")
+
+# Výpis úkolů
+st.subheader("📋
