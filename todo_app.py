@@ -13,7 +13,7 @@ new_task = st.text_input("Přidat nový úkol", placeholder="Např. Udělat dom�
 if st.button("➕ Přidat"):
     if new_task.strip():
         st.session_state.tasks.append({"text": new_task, "done": False})
-        st.experimental_rerun()
+        st.rerun()
 
 if st.session_state.tasks:
     st.subheader("📋 Seznam úkolů")
